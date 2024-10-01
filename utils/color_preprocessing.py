@@ -28,7 +28,7 @@ class GussianBlurCV:
         output_cv = cv2.addWeighted(image, 4, blurred, -4, 128)
         output_cv = torch.tensor(output_cv).permute(2,0,1)
         return output_cv
-
+    
 class GussianBlurTorch:
     def __call__(self, image: torch.Tensor):
         kernel_size = (39, 39)
@@ -96,20 +96,41 @@ class PolaLinear:
                 image = image[int(minr):int(maxr), int(minc):int(maxc-10)]
         return image
 
+class ScaleRadiusTransform:
+    def __call__(self, image: torch.Tensor, scale=500):
+        img = image.permute(1,2,0).numpy()
+        a = self.scaleRadius(img, scale)
+        b = np.zeros(a.shape)
+        x = a.shape[1] / 2
+        y = a.shape[0] / 2
+        center_coordinates = (int(x), int(y))
+        cv2.circle(b, center_coordinates, int(scale * 0.9), (1, 1, 1), -1, 8, 0)
+        aa = cv2.addWeighted(a, 4, cv2.GaussianBlur(a, (0, 0), scale / 30), -4, 128) * b + 128 * (1 - b)
+        aa = torch.tensor(aa).permute(2,0,1).int()
+        return aa
+
+    def scaleRadius(self, image, scale):
+        k = image.shape[0]/2
+        x = image[int(k), :, :].sum(1)
+        r=(x>x.mean()/10).sum()/2
+        if r == 0: r = 1
+        s=scale*1.0/r
+        return cv2.resize(image,(0,0),fx=s,fy=s)
+
 if __name__ == '__main__':
-    import matplotlib.pyplot as plt
+    pass
+    # import matplotlib.pyplot as plt
     
-    image = 'path/to/image'
-    img = read_image(image)
-    tran = v2.Compose([
-        # TrimpsCircle(),
-        # CP(),
-        # GussianBlurCV() ,
-        # GussianBlurTorch(),
-        # ScaleRadiusTransform(),
-        # HSVTransform(),
-        # SLAHE(),
-        # PolaLinear(),
-    ])
-    img2 = tran(img)
-    plt.imshow(img2.permute(1,2,0).numpy())
+    # image = 'path/to/image'
+    # img = read_image(image)
+    # tran = v2.Compose([
+    #     # CP(),
+    #     # GussianBlurCV() ,
+    #     # GussianBlurTorch(),
+    #     # ScaleRadiusTransform(),
+    #     # HSVTransform(),
+    #     # SLAHE(),
+    #     # PolaLinear(),
+    # ])
+    # img2 = tran(img)
+    # plt.imshow(img2.permute(1,2,0).numpy())
