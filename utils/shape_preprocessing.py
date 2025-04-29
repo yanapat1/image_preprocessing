@@ -6,7 +6,7 @@ from torchvision.transforms import v2
 
 # Resize and Crop the image: TrimpsCircle and CropPreprocess should use togather
 class ResizeAndCrop:
-    def __call__(self, image:torch.Tensor ,size=(1024,1024),size2=(400,400)):
+    def __call__(self, image:torch.Tensor ,size=(1024,1024),size2=(400,400), trimps=False):
         target_size = size
         if isinstance(image, torch.Tensor):
             image = image.permute(1,2,0).numpy()
@@ -37,7 +37,7 @@ class ResizeAndCrop:
         imageP = v2.ToPILImage()(output_image)
         imageT = v2.ToImage()(imageP)
         imageT = v2.ToDtype(torch.float32, scale=True)(imageT)
-        
+
         return imageT
 
 class TrimpsCircle:
